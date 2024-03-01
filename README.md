@@ -1,4 +1,4 @@
-# DOMIN SWE (Digital) Interview Task
+# Domin SWE (Digital) Interview Task
 
 This document provides instructions on how to run the UDP Publisher. This script reads the csv file and send it lin by line to the UDP. Please feel free to use this to test injesting data as part of the interview task.
 
