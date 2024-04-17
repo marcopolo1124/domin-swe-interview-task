@@ -25,7 +25,7 @@ for row in data:
         logger.log(logging.INFO, {'waiting for':row[10]})
         pass
     message = ','.join(row).encode()
-    sock.sendto(message, ('localhost', 12345))
+    sock.sendto(message, ('localhost', 12346))
     logger.log(logging.INFO, {'sent:': message})
 
 sock.close()
