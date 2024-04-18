@@ -13,4 +13,4 @@ if __name__ == "__main__":
     processor = Process(target=process_db, args=[q])
 
     listener.start()
-    processor.start()
+    # processor.start()
