@@ -1,6 +1,8 @@
 from multiprocessing import Queue
 import sqlite3
 from sqlite3 import Cursor, Connection
+from threading import Thread
+import socketio
 import time
 
 headers = "altitude,body_x_axis,body_y_axis,body_z_axis,fix,horizontal_dilution,latitude,longitude,num_sats,spd_over_grnd,timestamps,vehicle_accel_x,vehicle_accel_y,vehicle_accel_z,vehicle_gyro_x,vehicle_gyro_y,vehicle_gyro_z,vehicle_mag_x,vehicle_mag_y,vehicle_mag_z,vehicle_orientation_x,vehicle_orientation_y,vehicle_orientation_z,wheel_x_axis,wheel_y_axis,wheel_z_axis"
@@ -20,14 +22,23 @@ def create_db():
     for header in headers_list:
         create_query += f"{header} REAL,"
     create_query += "archived BOOLEAN DEFAULT false);"
-    print(create_query)
     cursor.execute(create_query)
     con.close()
 
+def diagnostics(q: Queue):
+    sio = socketio.SimpleClient()
+    sio.connect("http://localhost:5000")
+    while True:
+        msg = ""
+        while not q.empty():
+            msg = q.get()
+        sio.emit("data", msg)
+        time.sleep(1)
 
 def process_db(q: Queue):
     con = sqlite3.connect("suspensions.db")
     cursor = con.cursor()
+
     i = 0
 
     while True:
@@ -95,3 +106,9 @@ def delete_archived(cursor: Cursor, con: Connection):
         print("Successfully deleted")
     except Exception as e:
         print("Deletion unsuccessful: ", e)
+        
+def process(q1: Queue, q2: Queue):
+    t1 = Thread(target=process_db, args=[q1])
+    t2 = Thread(target=diagnostics, args=[q2])
+    t1.start()
+    t2.start()
