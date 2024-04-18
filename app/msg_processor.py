@@ -1,6 +1,7 @@
 from multiprocessing import Queue
 import sqlite3
 from sqlite3 import Cursor, Connection
+import random
 from threading import Thread
 import socketio
 import time
@@ -75,8 +76,11 @@ def insert_messages(cursor: Cursor, q: Queue):
         
 
 def send_to_database(rows):
-    time.sleep(10)
-    raise ConnectionError
+    fail = random.choice([0, 1])
+    if fail == 0:
+        pass
+    else:
+        raise ConnectionError
         
 def send_and_archive(cursor: Cursor, con: Connection):
     update_query = "UPDATE suspension_data SET archived = true WHERE archived = false RETURNING *;"
