@@ -1,5 +1,7 @@
 # Domin SWE (Digital) Interview Task Answers
 
+TASK 1 is in the file TaskOne.drawio. Alternatively, you can view it as a png in TaskOne.png
+
 To run this app please follow the steps
 1. pip install -r requirements.txt
 2. python diagnostics/main.py
