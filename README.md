@@ -1,17 +1,11 @@
-# Domin SWE (Digital) Interview Task
+# Domin SWE (Digital) Interview Task Answers
 
-This document provides instructions on how to run the UDP Publisher. This script reads the csv file and send it lin by line to the UDP. Please feel free to use this to test injesting data as part of the interview task.
+To run this app please follow the steps
+1. pip install -r requirements.txt
+2. python app/main.py
+3. python diagnostics/main.py
+4. python udp_publisher.py
 
-## Prerequisites
+Note that 2, 3, 4 can be executed in any order you wish. But you might want to execute udp publisher last
 
-- Python (Tested with Python 3.10.8 on Windows 10)
-
-## Running the UDP Publisher
-
-1. Open a terminal.
-2. Navigate to the directory containing `udp_publisher.py`.
-3. Run the following command:
-
-```bash
-python udp_publisher.py
-```
+After executing all the steps, you can see the diagnostics page on http://localhost:5000
