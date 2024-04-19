@@ -1,6 +1,4 @@
 import socket
-import socketio
-import threading
 import logging
 from multiprocessing import Queue
 

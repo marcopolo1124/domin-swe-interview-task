@@ -5,6 +5,7 @@ import random
 from threading import Thread
 import socketio
 import time
+import logging
 
 headers = "altitude,body_x_axis,body_y_axis,body_z_axis,fix,horizontal_dilution,latitude,longitude,num_sats,spd_over_grnd,timestamps,vehicle_accel_x,vehicle_accel_y,vehicle_accel_z,vehicle_gyro_x,vehicle_gyro_y,vehicle_gyro_z,vehicle_mag_x,vehicle_mag_y,vehicle_mag_z,vehicle_orientation_x,vehicle_orientation_y,vehicle_orientation_z,wheel_x_axis,wheel_y_axis,wheel_z_axis"
 headers_list = headers.split(",")
@@ -14,7 +15,8 @@ def create_db():
     cursor = con.cursor()
     
 
-    create_query = """CREATE TABLE IF NOT EXISTS suspension_data (
+    create_query = """
+        CREATE TABLE IF NOT EXISTS suspension_data (
         id INTEGER PRIMARY KEY,
         time_inserted TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     """
@@ -28,7 +30,16 @@ def create_db():
 
 def diagnostics(q: Queue):
     sio = socketio.SimpleClient()
-    sio.connect("http://localhost:5000")
+    connecting = True
+    while connecting:
+        try:
+            logging.info("connecting to diagnostics server")
+            sio.connect("http://localhost:5000")
+            connecting = False
+            logging.info("successfully connected to diagnostics server")
+        except Exception:
+            logging.error("failed to connect: trying again")
+            time.sleep(1)
     while True:
         msg = ""
         while not q.empty():
@@ -67,49 +78,54 @@ def insert_messages(cursor: Cursor, q: Queue):
         i += 1
     if rows > 0:
         try:
-            print("inserting")
+            logging.info("inserting data to database")
             cursor.execute(insert_query)
             cursor.execute("COMMIT")
-            print(f"rows added {rows}")
+            logging.info(f"successfully inserted {rows} rows")
         except Exception as e:
-            print("failed to insert new rows: ", e)
+            logging.error("failed to insert new rows: ", e)
         
 
 def send_to_database(rows):
     fail = random.choice([0, 1])
+    time.sleep(10)
     if fail == 0:
-        pass
+        logging.info("successfully sent to cloud database")
     else:
+        logging.info("can't reach database")
         raise ConnectionError
         
 def send_and_archive(cursor: Cursor, con: Connection):
     update_query = "UPDATE suspension_data SET archived = true WHERE archived = false RETURNING *;"
     try:
+        logging.info("archiving rows")
         cursor.execute(update_query)
         rows = cursor.fetchall()
-        print(len(rows))
 
         send_to_database(rows)
         
         con.commit()
-        print("sent to cloud")
+        logging.info(f"{len(rows)} rows sent to cloud")
     except Exception:
-        print("rolling back")
+        logging.error("failed to send to cloud. Rolling back")
         cursor.execute("ROLLBACK")
         
 
 def delete_archived(cursor: Cursor, con: Connection):
     delete_query = """
     DELETE FROM suspension_data 
-    WHERE archived = true and time_inserted < datetime('now', '-5 minutes')
+    WHERE datetime('now', '-1 hour')
+    OR
+    archived = true
+    AND time_inserted < datetime('now', '-5 minutes')
     """
     try:
-        print("deleting")
+        logging.info("deleting old/archived rows")
         cursor.execute(delete_query)
         con.commit()
-        print("Successfully deleted")
+        logging.info("Successfully deleted")
     except Exception as e:
-        print("Deletion unsuccessful: ", e)
+        logging.error("Deletion unsuccessful: ", e)
         
 def process(q1: Queue, q2: Queue):
     t1 = Thread(target=process_db, args=[q1])
